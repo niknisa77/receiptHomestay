@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Receipt Generator — Homestay Kayu Manis</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gd:#1a3d2b;--gm:#2e6b47;--gp:#d4ead9;--gl:#f0f8f2;
+  --gold:#b8963a;--tx:#1c1c1c;--muted:#6b7280;--bd:#d4ddd6;
+}
+body{font-family:'Source Sans 3',sans-serif;background:#e8ede8;min-height:100vh;padding:2rem 1rem}
+h1,h2{font-family:'Playfair Display',Georgia,serif}
+.app{max-width:900px;margin:0 auto}
+
+.app-header{text-align:center;margin-bottom:2rem}
+.logo-ring{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:50%;background:var(--gd);margin-bottom:10px}
+.logo-ring svg{width:26px;height:26px;fill:#fff}
+.app-header h1{font-size:1.55rem;color:var(--gd);font-weight:700}
+.app-header p{font-size:.87rem;color:var(--muted);margin-top:3px}
+
+.card{background:#fff;border-radius:16px;border:1px solid var(--bd);overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.07);margin-bottom:2rem}
+.card-head{background:var(--gd);padding:1rem 1.75rem;display:flex;align-items:center;justify-content:space-between}
+.card-head h2{color:#fff;font-size:.97rem;font-weight:600;font-family:'Source Sans 3',sans-serif}
+.siri-pill{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:20px;padding:4px 14px;font-size:.78rem}
+.siri-pill b{font-weight:700}
+.card-body{padding:1.75rem}
+
+.fsec{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gm);border-bottom:1px solid var(--gp);padding-bottom:5px;margin-bottom:1rem;margin-top:1.5rem}
+.fsec:first-child{margin-top:0}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.77rem;font-weight:600;color:var(--muted)}
+.field input,.field select{padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-size:.9rem;font-family:'Source Sans 3',sans-serif;color:var(--tx);background:#fff;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--gm);box-shadow:0 0 0 3px rgba(46,107,71,.1)}
+.field input[readonly]{background:var(--gl);color:var(--gd);font-weight:600;cursor:default}
+
+.total-row{margin-top:1.4rem;background:var(--gl);border:1px solid var(--gp);border-radius:10px;padding:.95rem 1.2rem;display:flex;align-items:center;justify-content:space-between}
+.total-row .lbl{font-size:.84rem;color:var(--muted)}
+.total-row .amt{font-family:'Playfair Display',serif;font-size:1.55rem;color:var(--gd);font-weight:700}
+
+.btn-gen{width:100%;margin-top:1.3rem;background:var(--gd);color:#fff;border:none;border-radius:10px;padding:13px 20px;font-size:.93rem;font-weight:600;font-family:'Source Sans 3',sans-serif;cursor:pointer;transition:background .15s}
+.btn-gen:hover{background:var(--gm)}
+.btn-gen:disabled{background:#aaa;cursor:not-allowed}
+
+#previewSection{display:none;margin-top:.5rem}
+.preview-lbl{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+#receiptImg{width:100%;border-radius:12px;border:1px solid var(--bd);box-shadow:0 8px 36px rgba(0,0,0,.12);display:block}
+.p-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn-a{padding:9px 22px;border-radius:8px;font-size:.84rem;font-weight:600;cursor:pointer;font-family:'Source Sans 3',sans-serif;transition:.15s;border:1px solid var(--bd);background:#fff;color:var(--tx)}
+.btn-a:hover{background:var(--gl)}
+.btn-a.pri{background:var(--gd);color:#fff;border-color:var(--gd)}
+.btn-a.pri:hover{background:var(--gm)}
+.btn-a.sec{background:#fff;color:var(--gd);border-color:var(--gp)}
+.btn-a.sec:hover{background:var(--gl)}
+
+canvas{display:none}
+@media(max-width:560px){.fg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="app-header">
+  <div class="logo-ring">
+    <svg viewBox="0 0 24 24"><path d="M3 7.5A4.5 4.5 0 0 1 7.5 3h9A4.5 4.5 0 0 1 21 7.5v9A4.5 4.5 0 0 1 16.5 21h-9A4.5 4.5 0 0 1 3 16.5v-9Zm4.5-1.5a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 7.5 18h9a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 16.5 6h-9Zm1.5 3a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 9 9Zm0 3a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5A.75.75 0 0 1 9 12Zm0 3a.75.75 0 0 1 .75-.75h2.25a.75.75 0 0 1 0 1.5H9.75A.75.75 0 0 1 9 15Z"/></svg>
+  </div>
+  <h1>Receipt Generator</h1>
+  <p>Homestay Kayu Manis — Official Digital Receipt System</p>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h2>Guest &amp; Accommodation Details</h2>
+    <div class="siri-pill">Receipt No: <b id="siriDisplay">001</b></div>
+  </div>
+  <div class="card-body">
+    <div class="fsec">Guest Information</div>
+    <div class="fg">
+      <div class="field"><label>Full Name *</label><input id="fNama" type="text" placeholder="e.g. Ahmad bin Ali"/></div>
+      <div class="field"><label>IC No. / Passport No.</label><input id="fIc" type="text" placeholder="e.g. 900101-01-1234"/></div>
+      <div class="field"><label>Phone Number</label><input id="fTel" type="text" placeholder="e.g. 011-12345678"/></div>
+      <div class="field"><label>Number of Guests</label><input id="fTetamu" type="number" min="1" value="1"/></div>
+    </div>
+
+    <div class="fsec">Stay Information</div>
+    <div class="fg">
+      <div class="field"><label>Check-In Date *</label><input id="fCi" type="date"/></div>
+      <div class="field"><label>Check-Out Date *</label><input id="fCo" type="date"/></div>
+      <div class="field"><label>Total Nights</label><input id="fMalam" type="text" readonly placeholder="— auto"/></div>
+      <div class="field"><label>Rate per Night (RM) *</label><input id="fKadar" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+    </div>
+
+    <div class="fsec">Payment Information</div>
+    <div class="fg">
+      <div class="field"><label>Payment Method *</label>
+        <select id="fKaedah">
+          <option value="">— Select —</option>
+          <option>Cash</option>
+          <option>Online Transfer</option>
+          <option>DuitNow QR</option>
+          <option>Credit / Debit Card</option>
+        </select>
+      </div>
+      <div class="field"><label>Payment Status</label>
+        <select id="fStatus">
+          <option value="PAID IN FULL">Paid in Full</option>
+          <option value="DEPOSIT PAID">Deposit Paid</option>
+          <option value="PARTIAL PAYMENT">Partial Payment</option>
+          <option value="PENDING">Pending</option>
+        </select>
+      </div>
+      <div class="field"><label>Remarks / Notes</label><input id="fCatatan" type="text" placeholder="e.g. Deposit RM100 received"/></div>
+      <div class="field"><label>Subtotal (RM)</label><input id="fSubtotal" type="text" readonly placeholder="— auto"/></div>
+    </div>
+
+    <div class="fg" style="margin-top:14px">
+      <div class="field">
+        <label>Discount Type</label>
+        <select id="fDiscType" onchange="recalcDiscount()">
+          <option value="none">No Discount</option>
+          <option value="fixed">Fixed Amount (RM)</option>
+          <option value="percent">Percentage (%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Discount Value</label>
+        <input id="fDiscVal" type="number" min="0" step="0.01" placeholder="0" oninput="recalcDiscount()" disabled/>
+      </div>
+      <div class="field">
+        <label>Discount Reason <span style="font-weight:400;font-style:italic">(optional)</span></label>
+        <input id="fDiscReason" type="text" placeholder="e.g. Returning Guest Discount"/>
+      </div>
+      <div class="field">
+        <label>Total After Discount (RM)</label>
+        <input id="fJumlah" type="text" readonly placeholder="— auto"/>
+      </div>
+    </div>
+
+    <div class="total-row">
+      <div>
+        <div class="lbl">Total Amount Payable</div>
+        <div id="discountBadge" style="display:none;margin-top:4px;font-size:.75rem;color:#b8963a;font-weight:600"></div>
+      </div>
+      <span class="amt" id="totalDisplay">RM 0.00</span>
+    </div>
+    <button class="btn-gen" id="btnGen" onclick="doGenerate()">&#9654;&nbsp; Generate Receipt</button>
+  </div>
+</div>
+
+<div id="previewSection">
+  <div class="preview-lbl">Receipt Preview</div>
+  <img id="receiptImg" src="" alt="Receipt"/>
+  <div class="p-actions">
+    <button class="btn-a pri" onclick="downloadPDF()">&#8681;&nbsp; Download PDF</button>
+    <button class="btn-a sec" onclick="downloadPNG()">&#8681;&nbsp; Download PNG</button>
+    <button class="btn-a" onclick="resetForm()">&#43;&nbsp; New Receipt</button>
+  </div>
+</div>
+
+</div>
+<canvas id="cvs"></canvas>
+
+<script>
+// ─── SERIAL: read once, use for current receipt, increment AFTER drawing ───
+let siriNum = parseInt(localStorage.getItem('kmc_v4') || '1');
+function p3(n){ return String(n).padStart(3,'0'); }
+document.getElementById('siriDisplay').textContent = p3(siriNum);
+
+// ─── SCALE: 2× for Full HD sharpness ───
+const SCALE = 2;
+
+// ─── AUTO-CALC ───
+function recalc(){
+  const ci=document.getElementById('fCi').value;
+  const co=document.getElementById('fCo').value;
+  const r=parseFloat(document.getElementById('fKadar').value)||0;
+  if(ci&&co){
+    const n=Math.max(0,Math.round((new Date(co)-new Date(ci))/86400000));
+    document.getElementById('fMalam').value=n+' Night'+(n!==1?'s':'');
+    if(r>0){
+      const sub=n*r;
+      document.getElementById('fSubtotal').value='RM '+sub.toFixed(2);
+      recalcDiscount(sub);
+    }
+  }
+}
+['fCi','fCo','fKadar'].forEach(id=>document.getElementById(id).addEventListener('change',recalc));
+
+function recalcDiscount(subOverride){
+  const subVal=subOverride!==undefined?subOverride:parseFloat((document.getElementById('fSubtotal').value||'').replace('RM',''))||0;
+  const dtype=document.getElementById('fDiscType').value;
+  const dval=parseFloat(document.getElementById('fDiscVal').value)||0;
+  const dvEl=document.getElementById('fDiscVal');
+  const badge=document.getElementById('discountBadge');
+
+  dvEl.disabled=(dtype==='none');
+  if(dtype==='none'){ dvEl.value=''; }
+
+  let disc=0;
+  if(dtype==='fixed') disc=Math.min(dval,subVal);
+  if(dtype==='percent') disc=Math.min(dval,100)/100*subVal;
+
+  const total=Math.max(0,subVal-disc);
+  document.getElementById('fJumlah').value='RM '+total.toFixed(2);
+  document.getElementById('totalDisplay').textContent='RM '+total.toFixed(2);
+
+  if(disc>0){
+    badge.style.display='block';
+    badge.textContent='Discount applied: − RM '+disc.toFixed(2)+(dtype==='percent'?' ('+dval+'%)':'');
+  } else {
+    badge.style.display='none';
+  }
+}
+document.getElementById('fDiscType').addEventListener('change',()=>recalcDiscount());
+document.getElementById('fDiscVal').addEventListener('input',()=>recalcDiscount());
+
+// ─── DATE HELPERS ───
+function fLong(s){ if(!s)return'—'; return new Date(s).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+function fShort(s){ if(!s)return'—'; return new Date(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function sClr(s){ return s==='PAID IN FULL'?'#14532d':s==='PENDING'?'#7f1d1d':'#78350f'; }
+
+// ─── ROUNDRECT ───
+function RR(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.arcTo(x+w,y,x+w,y+r,r);
+  c.lineTo(x+w,y+h-r); c.arcTo(x+w,y+h,x+w-r,y+h,r);
+  c.lineTo(x+r,y+h); c.arcTo(x,y+h,x,y+h-r,r);
+  c.lineTo(x,y+r); c.arcTo(x,y,x+r,y,r);
+  c.closePath();
+}
+
+// ─── DRAW RECEIPT ───
+// Canvas logical size in "receipt pixels" — all coords are at 1× then scaled
+const RW=794, RH=1190;
+
+function doGenerate(){
+  const nama=document.getElementById('fNama').value.trim();
+  const ic=document.getElementById('fIc').value.trim();
+  const tel=document.getElementById('fTel').value.trim();
+  const tet=document.getElementById('fTetamu').value||'1';
+  const ci=document.getElementById('fCi').value;
+  const co=document.getElementById('fCo').value;
+  const malNum=parseInt(document.getElementById('fMalam').value)||0;
+  const kadar=parseFloat(document.getElementById('fKadar').value)||0;
+  const subtotalRaw=parseFloat((document.getElementById('fSubtotal').value||'').replace('RM',''))||0;
+  const jumlah=parseFloat((document.getElementById('fJumlah').value||'').replace('RM',''))||0;
+  const dtype=document.getElementById('fDiscType').value;
+  const dval=parseFloat(document.getElementById('fDiscVal').value)||0;
+  const discReason=document.getElementById('fDiscReason').value.trim();
+  let discAmt=0;
+  if(dtype==='fixed') discAmt=Math.min(dval,subtotalRaw);
+  if(dtype==='percent') discAmt=Math.min(dval,100)/100*subtotalRaw;
+  const subtotal=subtotalRaw||jumlah;
+  const kaedah=document.getElementById('fKaedah').value||'—';
+  const status=document.getElementById('fStatus').value;
+  const catatan=document.getElementById('fCatatan').value.trim();
+
+  if(!nama||!ci||!co||!jumlah){ alert('Please complete: Full Name, Check-In / Check-Out Dates, and Total Amount.'); return; }
+
+  // snapshot serial BEFORE increment
+  const siri=p3(siriNum);
+
+  const btn=document.getElementById('btnGen');
+  btn.disabled=true; btn.textContent='Generating…';
+
+  const cvs=document.getElementById('cvs');
+  cvs.width=RW*SCALE; cvs.height=RH*SCALE;
+  const c=cvs.getContext('2d');
+  c.scale(SCALE,SCALE);
+
+  // ── BG ──
+  c.fillStyle='#ffffff'; c.fillRect(0,0,RW,RH);
+  c.fillStyle='#fdfcf8'; c.fillRect(0,RH-330,RW,330);
+
+  // ── HEADER ──
+  c.fillStyle='#1a3d2b'; c.fillRect(0,0,RW,150);
+  c.fillStyle='#b8963a'; c.fillRect(0,150,RW,5);
+  c.fillStyle='#b8963a'; c.fillRect(0,0,7,155);
+
+  // brand
+  c.fillStyle='#ffffff';
+  c.font='bold 27px "Playfair Display",Georgia,serif'; c.textAlign='left';
+  c.fillText('HOMESTAY KAYU MANIS',36,52);
+  c.fillStyle='rgba(255,255,255,.5)';
+  c.font='500 11.5px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Official Accommodation Receipt  ·  Resit Penginapan Rasmi',36,74);
+  c.fillStyle='rgba(255,255,255,.32)';
+  c.font='11px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Batu Kurau, Perak, Malaysia',36,118);
+
+  // badge
+  c.fillStyle='rgba(184,150,58,.2)'; RR(c,RW-184,18,148,40,6); c.fill();
+  c.strokeStyle='rgba(184,150,58,.55)'; c.lineWidth=1; RR(c,RW-184,18,148,40,6); c.stroke();
+  c.fillStyle='#f0d898'; c.font='bold 12px "Source Sans 3",Arial,sans-serif'; c.textAlign='center';
+  c.fillText('OFFICIAL RECEIPT',RW-110,43);
+
+  // ── META BAND ──
+  c.fillStyle='#f4f8f5'; c.fillRect(0,155,RW,68);
+  c.strokeStyle='#dce8dd'; c.lineWidth=.5; c.strokeRect(0,155,RW,68);
+  const todayStr=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const metas=[['RECEIPT NO.','KM-'+siri],['DATE ISSUED',todayStr],['PAYMENT STATUS',status]];
+  const mW=RW/3;
+  metas.forEach(([lbl,val],i)=>{
+    const mx=i*mW+mW/2;
+    c.fillStyle='#8a9e8e'; c.font='600 9.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='center'; c.fillText(lbl,mx,177);
+    c.fillStyle=i===2?sClr(status):'#1a3d2b'; c.font='bold 13px "Playfair Display",Georgia,serif'; c.fillText(val,mx,197);
+    if(i<2){ c.strokeStyle='#d0ddd1'; c.lineWidth=.5; c.beginPath(); c.moveTo((i+1)*mW,162); c.lineTo((i+1)*mW,215); c.stroke(); }
+  });
+
+  // ── CONTENT ──
+  const L=44,R=RW-44,CW=R-L;
+  let y=244;
+
+  function sH(t){
+    c.fillStyle='#1a3d2b'; c.fillRect(L,y,5,15);
+    c.font='700 9.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='left'; c.fillText(t,L+13,y+12);
+    c.strokeStyle='#cddfd0'; c.lineWidth=.5; c.beginPath(); c.moveTo(L+13,y+19); c.lineTo(R,y+19); c.stroke();
+    y+=33;
+  }
+  function row(lbl,val,shade){
+    c.fillStyle=shade?'#f6faf7':'#fff';
+    c.fillRect(L,y,CW,28); c.strokeStyle='#ecf3ee'; c.lineWidth=.5; c.strokeRect(L,y,CW,28);
+    c.fillStyle='#7a8e80'; c.font='11.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='left'; c.fillText(lbl,L+14,y+18);
+    c.fillStyle='#1c1c1c'; c.font='500 12px "Source Sans 3",Arial,sans-serif'; c.textAlign='right'; c.fillText(val,R-14,y+18);
+    y+=28;
+  }
+
+  sH('GUEST INFORMATION');
+  row('Full Name',nama,false);
+  if(ic) row('IC No. / Passport No.',ic,true);
+  if(tel) row('Phone Number',tel,!!ic);
+  row('Number of Guests',tet+' person'+(parseInt(tet)>1?'s':''),true);
+  y+=8;
+
+  sH('STAY DETAILS');
+  row('Check-In Date',fLong(ci),false);
+  row('Check-Out Date',fLong(co),true);
+  row('Duration of Stay',malNum+' Night'+(malNum!==1?'s':''),false);
+  if(kadar>0) row('Rate per Night','RM '+kadar.toFixed(2),true);
+  y+=8;
+
+  sH('CHARGES BREAKDOWN');
+  // table header
+  c.fillStyle='#1a3d2b'; c.fillRect(L,y,CW,25);
+  c.fillStyle='#fff'; c.font='700 9.5px "Source Sans 3",Arial,sans-serif';
+  c.textAlign='left'; c.fillText('DESCRIPTION',L+14,y+16);
+  c.textAlign='center'; c.fillText('NIGHTS',L+CW*.56,y+16);
+  c.textAlign='right'; c.fillText('RATE (RM)',R-125,y+16); c.fillText('AMOUNT (RM)',R-14,y+16);
+  y+=25;
+  // table row
+  c.fillStyle='#f6faf7'; c.fillRect(L,y,CW,38);
+  c.strokeStyle='#cddfd0'; c.lineWidth=.5; c.strokeRect(L,y,CW,38);
+  c.fillStyle='#1c1c1c'; c.font='500 12px "Source Sans 3",Arial,sans-serif'; c.textAlign='left';
+  c.fillText('Accommodation — Homestay Kayu Manis',L+14,y+14);
+  c.fillStyle='#6b7280'; c.font='10.5px "Source Sans 3",Arial,sans-serif';
+  c.fillText(fShort(ci)+' to '+fShort(co),L+14,y+28);
+  c.fillStyle='#1c1c1c'; c.font='500 12px "Source Sans 3",Arial,sans-serif';
+  c.textAlign='center'; c.fillText(malNum||'—',L+CW*.56,y+22);
+  c.textAlign='right'; c.fillText(kadar>0?kadar.toFixed(2):'—',R-125,y+22);
+  c.font='600 13px "Source Sans 3",Arial,sans-serif'; c.fillText(subtotal.toFixed(2),R-14,y+22);
+  y+=38;
+
+  if(catatan){
+    c.fillStyle='#fffbf0'; c.fillRect(L,y,CW,25);
+    c.strokeStyle='#eed98a'; c.lineWidth=.5; c.strokeRect(L,y,CW,25);
+    c.fillStyle='#7a6020'; c.font='italic 11px "Source Sans 3",Arial,sans-serif'; c.textAlign='left';
+    c.fillText('Note: '+catatan,L+14,y+17); y+=25;
+  }
+
+  // subtotal / discount / tax lines
+  c.strokeStyle='#d4ead9'; c.lineWidth=.5;
+  c.beginPath(); c.moveTo(L,y+8); c.lineTo(R,y+8); c.stroke(); y+=10;
+  c.fillStyle='#7a8e80'; c.font='11px "Source Sans 3",Arial,sans-serif'; c.textAlign='left'; c.fillText('Subtotal',L+14,y+15);
+  c.fillStyle='#1c1c1c'; c.font='500 12px "Source Sans 3",Arial,sans-serif'; c.textAlign='right'; c.fillText('RM '+subtotal.toFixed(2),R-14,y+15); y+=22;
+
+  if(discAmt>0){
+    const discLabel=dtype==='percent'?'Discount ('+dval+'%)'+(discReason?' — '+discReason:''):'Discount'+(discReason?' — '+discReason:'');
+    c.fillStyle='#b8963a'; c.font='11px "Source Sans 3",Arial,sans-serif'; c.textAlign='left'; c.fillText(discLabel,L+14,y+15);
+    c.fillStyle='#14532d'; c.font='500 12px "Source Sans 3",Arial,sans-serif'; c.textAlign='right'; c.fillText('− RM '+discAmt.toFixed(2),R-14,y+15); y+=22;
+  }
+
+  c.fillStyle='#7a8e80'; c.font='11px "Source Sans 3",Arial,sans-serif'; c.textAlign='left'; c.fillText('Tax / SST',L+14,y+15);
+  c.textAlign='right'; c.fillText('Exempt / N/A',R-14,y+15); y+=26;
+
+  // total box
+  c.fillStyle='#1a3d2b'; RR(c,L,y,CW,58,8); c.fill();
+  c.fillStyle='rgba(184,150,58,.22)'; RR(c,L,y,CW,58,8); c.fill();
+  c.fillStyle='rgba(255,255,255,.5)'; c.font='700 9.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='left';
+  c.fillText('TOTAL AMOUNT DUE',L+18,y+20);
+  c.fillStyle='rgba(255,255,255,.38)'; c.font='11px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Payment Method: '+kaedah,L+18,y+36);
+  c.fillStyle='#f0d898'; c.font='600 11px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Status: '+status,L+18,y+50);
+  c.fillStyle='#fff'; c.font='bold 27px "Playfair Display",Georgia,serif'; c.textAlign='right';
+  c.fillText('RM '+jumlah.toFixed(2),R-18,y+40);
+  y+=72;
+
+  // divider
+  c.strokeStyle='#cddfd0'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(L,y); c.lineTo(R,y); c.stroke(); y+=26;
+
+  // ── SIGNATURE ZONE ──
+  const colW=(CW-24)/2;
+  const lx=L, rx=L+colW+24;
+  const zH=95;
+
+  // LEFT — received / guest acknowledgement
+  c.strokeStyle='#c0d8c4'; c.lineWidth=1; c.setLineDash([4,4]);
+  RR(c,lx,y,colW,zH,6); c.stroke(); c.setLineDash([]);
+  c.fillStyle='#9ab0a0'; c.font='700 8.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='center';
+  c.fillText('RECEIVED BY / GUEST ACKNOWLEDGEMENT',lx+colW/2,y+16);
+  // seal
+  const scx=lx+colW/2, scy=y+zH/2+8;
+  c.strokeStyle='#b8963a'; c.lineWidth=1.5;
+  c.beginPath(); c.arc(scx,scy,26,0,Math.PI*2); c.stroke();
+  c.strokeStyle='rgba(184,150,58,.3)'; c.lineWidth=.5;
+  c.beginPath(); c.arc(scx,scy,20,0,Math.PI*2); c.stroke();
+  c.fillStyle='#b8963a'; c.font='700 8px "Source Sans 3",Arial,sans-serif'; c.textAlign='center';
+  c.fillText('KAYU',scx,scy-2); c.fillText('MANIS',scx,scy+9);
+
+  // RIGHT — authorised signature box
+  c.strokeStyle='#c0d8c4'; c.lineWidth=.5;
+  c.beginPath(); c.moveTo(rx,y); c.lineTo(rx+colW,y); c.stroke();
+  c.beginPath(); c.moveTo(rx,y+zH); c.lineTo(rx+colW,y+zH); c.stroke();
+  c.fillStyle='#9ab0a0'; c.font='700 8.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='center';
+  c.fillText('AUTHORISED SIGNATURE',rx+colW/2,y+16);
+
+  // load sign image
+  const sigImg=new Image();
+  sigImg.onload=function(){
+    // small crisp: max 110×48 logical px
+    const sw=110,sh=48;
+    const sx=rx+(colW-sw)/2, sy=y+24;
+    c.drawImage(sigImg,sx,sy,sw,sh);
+    _finalize(c,y,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn);
+  };
+  sigImg.onerror=function(){
+    c.strokeStyle='#b8c8bc'; c.lineWidth=.8;
+    for(let l=0;l<2;l++){ c.beginPath(); c.moveTo(rx+18,y+38+l*18); c.lineTo(rx+colW-18,y+38+l*18); c.stroke(); }
+    _finalize(c,y,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn);
+  };
+  sigImg.src='image/sign.png';
+}
+
+function _finalize(c,sigY,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn){
+  const ny=sigY+zH+14;
+
+  // right — owner name
+  c.fillStyle='#1a3d2b'; c.font='bold 13px "Playfair Display",Georgia,serif'; c.textAlign='center';
+  c.fillText('JUNAIDAH BT RAZAK',rx+colW/2,ny);
+  c.fillStyle='#6b7280'; c.font='11px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Owner / Pemilik',rx+colW/2,ny+15);
+  c.fillText('Homestay Kayu Manis',rx+colW/2,ny+29);
+
+  // left — guest sig line
+  c.fillStyle='#9ab0a0'; c.font='700 8.5px "Source Sans 3",Arial,sans-serif'; c.textAlign='center';
+  c.fillText('GUEST SIGNATURE',lx+colW/2,ny);
+  c.strokeStyle='#c0d8c4'; c.lineWidth=.8;
+  c.beginPath(); c.moveTo(lx+16,ny+22); c.lineTo(lx+colW-16,ny+22); c.stroke();
+  c.fillStyle='#aabab0'; c.font='10px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Signature',lx+colW/2,ny+35);
+
+  // gold rule
+  const gy=ny+52;
+  c.strokeStyle='rgba(184,150,58,.35)'; c.lineWidth=.5;
+  c.beginPath(); c.moveTo(L,gy); c.lineTo(R,gy); c.stroke();
+
+  // terms
+  const ty=gy+18;
+  c.fillStyle='#1a3d2b'; c.fillRect(L,ty,4,13);
+  c.font='700 9px "Source Sans 3",Arial,sans-serif'; c.textAlign='left';
+  c.fillText('TERMS & CONDITIONS',L+12,ty+11);
+  const terms=[
+    '1. This receipt is official proof of payment. Please retain for your records.',
+    '2. Check-in: 2.30 PM  ·  Check-out: 12:00 PM (Noon)',
+    '3. Early check-out does not entitle a refund unless agreed in writing prior to check-in.',
+    '4. For enquiries, please contact the property owner directly.',
+    '5. Management reserves the right to refuse service for non-compliance with house rules.',
+  ];
+  terms.forEach((t,i)=>{
+    c.fillStyle='#7a8e80'; c.font='10px "Source Sans 3",Arial,sans-serif'; c.textAlign='left';
+    c.fillText(t,L+4,ty+26+i*16);
+  });
+
+  // footer
+  c.fillStyle='#1a3d2b'; c.fillRect(0,RH-62,RW,62);
+  c.fillStyle='#b8963a'; c.fillRect(0,RH-62,RW,4);
+  c.fillStyle='rgba(255,255,255,.45)'; c.font='11px "Source Sans 3",Arial,sans-serif'; c.textAlign='center';
+  c.fillText('This is a computer-generated receipt and is valid without a physical wet-ink signature.',RW/2,RH-38);
+  c.fillStyle='rgba(255,255,255,.28)'; c.font='10px "Source Sans 3",Arial,sans-serif';
+  c.fillText('Homestay Kayu Manis  ·  Receipt No: KM-'+siri+'  ·  Total: RM '+jumlah.toFixed(2)+'  ·  '+new Date().getFullYear(),RW/2,RH-18);
+
+  // show preview
+  const img=document.getElementById('receiptImg');
+  img.src=document.getElementById('cvs').toDataURL('image/png');
+  document.getElementById('previewSection').style.display='block';
+  document.getElementById('previewSection').scrollIntoView({behavior:'smooth'});
+
+  // NOW increment serial — after receipt drawn with current siriNum
+  siriNum++;
+  localStorage.setItem('kmc_v4',String(siriNum));
+  document.getElementById('siriDisplay').textContent=p3(siriNum);
+
+  btn.disabled=false; btn.textContent='▶ Generate Receipt';
+}
+
+// ─── DOWNLOAD PDF ───
+function downloadPDF(){
+  const img=document.getElementById('receiptImg').src;
+  if(!img||img.length<100){ alert('Please generate a receipt first.'); return; }
+  const {jsPDF}=window.jspdf;
+  // A4: 210 × 297 mm
+  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw=pdf.internal.pageSize.getWidth();
+  const ph=pdf.internal.pageSize.getHeight();
+  // receipt aspect ratio
+  const aspect=RH/RW;
+  const imgH=pw*aspect;
+  const yOff=imgH<ph?(ph-imgH)/2:0;
+  pdf.addImage(img,'PNG',0,yOff,pw,Math.min(imgH,ph),undefined,'FAST');
+  const siriUsed=p3(siriNum-1);
+  pdf.save('Receipt-KayuManis-KM-'+siriUsed+'.pdf');
+}
+
+// ─── DOWNLOAD PNG ───
+function downloadPNG(){
+  const img=document.getElementById('receiptImg').src;
+  if(!img||img.length<100){ alert('Please generate a receipt first.'); return; }
+  const a=document.createElement('a');
+  a.download='Receipt-KayuManis-KM-'+p3(siriNum-1)+'.png';
+  a.href=img; a.click();
+}
+
+// ─── RESET ───
+function resetForm(){
+  ['fNama','fIc','fTel','fCi','fCo','fKadar','fCatatan','fDiscVal','fDiscReason'].forEach(id=>{
+    const el=document.getElementById(id); if(el){ el.value=''; delete el.dataset.m; }
+  });
+  document.getElementById('fTetamu').value='1';
+  document.getElementById('fMalam').value='';
+  document.getElementById('fSubtotal').value='';
+  document.getElementById('fJumlah').value='';
+  document.getElementById('fKaedah').selectedIndex=0;
+  document.getElementById('fStatus').selectedIndex=0;
+  document.getElementById('fDiscType').selectedIndex=0;
+  document.getElementById('fDiscVal').disabled=true;
+  document.getElementById('totalDisplay').textContent='RM 0.00';
+  document.getElementById('discountBadge').style.display='none';
+  document.getElementById('previewSection').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
