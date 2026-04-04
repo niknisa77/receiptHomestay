@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Receipt Generator — Homestay Kayu Manis</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -291,7 +291,7 @@ function doGenerate(){
   c.fillText('Official Accommodation Receipt  ·  Resit Penginapan Rasmi',36,74);
   c.fillStyle='rgba(255,255,255,.32)';
   c.font='11px "Source Sans 3",Arial,sans-serif';
-  c.fillText('Batu Kurau, Perak, Malaysia',36,118);
+  c.fillText('Malaysia',36,118);
 
   // badge
   c.fillStyle='rgba(184,150,58,.2)'; RR(c,RW-184,18,148,40,6); c.fill();
@@ -444,7 +444,7 @@ function doGenerate(){
     for(let l=0;l<2;l++){ c.beginPath(); c.moveTo(rx+18,y+38+l*18); c.lineTo(rx+colW-18,y+38+l*18); c.stroke(); }
     _finalize(c,y,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn);
   };
-  sigImg.src='image/sign.png';
+  sigImg.src='images/sign.png';
 }
 
 function _finalize(c,sigY,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn){
@@ -477,7 +477,7 @@ function _finalize(c,sigY,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn)
   c.fillText('TERMS & CONDITIONS',L+12,ty+11);
   const terms=[
     '1. This receipt is official proof of payment. Please retain for your records.',
-    '2. Check-in: 2:30 PM  ·  Check-out: 12:00 PM (Noon)',
+    '2. Check-in: 2:00 PM  ·  Check-out: 12:00 PM (Noon)',
     '3. Early check-out does not entitle a refund unless agreed in writing prior to check-in.',
     '4. For enquiries, please contact the property owner directly.',
     '5. Management reserves the right to refuse service for non-compliance with house rules.',
@@ -511,20 +511,37 @@ function _finalize(c,sigY,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn)
 
 // ─── DOWNLOAD PDF ───
 function downloadPDF(){
-  const img=document.getElementById('receiptImg').src;
-  if(!img||img.length<100){ alert('Please generate a receipt first.'); return; }
-  const {jsPDF}=window.jspdf;
-  // A4: 210 × 297 mm
-  const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const pw=pdf.internal.pageSize.getWidth();
-  const ph=pdf.internal.pageSize.getHeight();
-  // receipt aspect ratio
-  const aspect=RH/RW;
-  const imgH=pw*aspect;
-  const yOff=imgH<ph?(ph-imgH)/2:0;
-  pdf.addImage(img,'PNG',0,yOff,pw,Math.min(imgH,ph),undefined,'FAST');
-  const siriUsed=p3(siriNum-1);
-  pdf.save('Receipt-KayuManis-KM-'+siriUsed+'.pdf');
+  const imgEl=document.getElementById('receiptImg');
+  if(!imgEl.src||imgEl.src===window.location.href){ alert('Please generate a receipt first.'); return; }
+
+  if(!window.jspdf||!window.jspdf.jsPDF){
+    alert('PDF library not loaded yet. Please wait a moment and try again.'); return;
+  }
+
+  try {
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+
+    // A4 in points: 595.28 x 841.89
+    const pw=595.28, ph=841.89;
+
+    // Use canvas directly for best quality
+    const cvs=document.getElementById('cvs');
+    const imgData=cvs.toDataURL('image/jpeg',0.97);
+
+    // Scale to fit width, center vertically
+    const aspect=cvs.height/cvs.width;
+    const drawW=pw;
+    const drawH=pw*aspect;
+    const yOff=drawH<ph?(ph-drawH)/2:0;
+
+    pdf.addImage(imgData,'JPEG',0,yOff,drawW,Math.min(drawH,ph),'','FAST');
+    const siriUsed=p3(siriNum-1);
+    pdf.save('Receipt-KayuManis-KM-'+siriUsed+'.pdf');
+  } catch(e){
+    console.error(e);
+    alert('PDF export failed: '+e.message);
+  }
 }
 
 // ─── DOWNLOAD PNG ───
