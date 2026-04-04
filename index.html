@@ -291,7 +291,7 @@ function doGenerate(){
   c.fillText('Official Accommodation Receipt  ·  Resit Penginapan Rasmi',36,74);
   c.fillStyle='rgba(255,255,255,.32)';
   c.font='11px "Source Sans 3",Arial,sans-serif';
-  c.fillText('Malaysia',36,118);
+  c.fillText('Batu Kurau, Peral, Malaysia',36,118);
 
   // badge
   c.fillStyle='rgba(184,150,58,.2)'; RR(c,RW-184,18,148,40,6); c.fill();
@@ -444,7 +444,7 @@ function doGenerate(){
     for(let l=0;l<2;l++){ c.beginPath(); c.moveTo(rx+18,y+38+l*18); c.lineTo(rx+colW-18,y+38+l*18); c.stroke(); }
     _finalize(c,y,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn);
   };
-  sigImg.src='images/sign.png';
+  sigImg.src='image/sign.png';
 }
 
 function _finalize(c,sigY,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn){
@@ -477,7 +477,7 @@ function _finalize(c,sigY,zH,lx,rx,colW,L,R,RW,RH,siri,jumlah,kaedah,status,btn)
   c.fillText('TERMS & CONDITIONS',L+12,ty+11);
   const terms=[
     '1. This receipt is official proof of payment. Please retain for your records.',
-    '2. Check-in: 2:00 PM  ·  Check-out: 12:00 PM (Noon)',
+    '2. Check-in: 2:30 PM  ·  Check-out: 12:00 PM (Noon)',
     '3. Early check-out does not entitle a refund unless agreed in writing prior to check-in.',
     '4. For enquiries, please contact the property owner directly.',
     '5. Management reserves the right to refuse service for non-compliance with house rules.',
